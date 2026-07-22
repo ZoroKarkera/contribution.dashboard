@@ -63,9 +63,10 @@ function renderOwnerContributions() {
           <th>Block</th>
           <th>Flat</th>
           <th>Owner</th>
-          <th>Expected</th>
           <th>Paid</th>
-          <th>Status</th>
+          <th>Payment Date</th>
+          <th>Payment Mode</th>
+          <th>Reference</th>
         </tr>
       </thead>
       <tbody>
@@ -76,9 +77,10 @@ function renderOwnerContributions() {
                 <td>${owner.wing}</td>
                 <td>${owner.flat}</td>
                 <td>${owner.owner_name}</td>
-                <td>${owner.formatted_expected_amount}</td>
                 <td>${owner.formatted_paid_amount}</td>
-                <td><span class="tag">${owner.status}</span></td>
+                <td>${owner.last_payment_date || "-"}</td>
+                <td>${owner.payment_mode || "-"}</td>
+                <td>${owner.reference || "-"}</td>
               </tr>
             `,
           )
@@ -95,10 +97,10 @@ function renderSponsorContributions() {
       <thead>
         <tr>
           <th>Sponsor</th>
-          <th>Category</th>
-          <th>Pledged</th>
           <th>Received</th>
-          <th>Status</th>
+          <th>Payment Date</th>
+          <th>Contact</th>
+          <th>Reference</th>
         </tr>
       </thead>
       <tbody>
@@ -107,10 +109,10 @@ function renderSponsorContributions() {
             (sponsor) => `
               <tr>
                 <td>${sponsor.sponsor_name}</td>
-                <td>${sponsor.category}</td>
-                <td>${sponsor.formatted_pledged_amount}</td>
                 <td>${sponsor.formatted_received_amount}</td>
-                <td><span class="tag">${sponsor.status}</span></td>
+                <td>${sponsor.received_date || "-"}</td>
+                <td>${sponsor.phone || "-"}</td>
+                <td>${sponsor.reference || "-"}</td>
               </tr>
             `,
           )

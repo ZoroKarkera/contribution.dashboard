@@ -6,6 +6,7 @@ import shutil
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,13 +22,41 @@ def read_json(path: Path) -> dict:
 
 def read_csv(path: Path) -> list[dict]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return list(csv.DictReader(handle))
+        rows = list(csv.reader(handle))
+
+    if not rows:
+        return []
+
+    raw_headers = rows[0]
+    header_counts: dict[str, int] = defaultdict(int)
+    headers = []
+    for header in raw_headers:
+        name = (header or "").strip()
+        header_counts[name] += 1
+        if header_counts[name] == 1:
+            headers.append(name)
+        else:
+            headers.append(f"{name}__{header_counts[name]}")
+
+    return [dict(zip(headers, row)) for row in rows[1:]]
+
+
+def normalize_header(value: str | None) -> str:
+    return re.sub(r"[^a-z0-9]+", "", (value or "").lower())
+
+
+def get_value(record: dict, *aliases: str) -> str:
+    normalized_aliases = {normalize_header(alias) for alias in aliases}
+    for key, value in record.items():
+        if normalize_header(key) in normalized_aliases:
+            return str(value or "").strip()
+    return ""
 
 
 def parse_amount(value: str | None) -> float:
     if not value:
         return 0.0
-    normalized = str(value).replace(",", "").strip()
+    normalized = str(value).replace(",", "").replace("Rs.", "").replace("₹", "").strip()
     if not normalized:
         return 0.0
     return float(normalized)
@@ -39,10 +68,12 @@ def parse_date(value: str | None) -> datetime | None:
     value = value.strip()
     if not value:
         return None
-    try:
-        return datetime.strptime(value, "%Y-%m-%d")
-    except ValueError:
-        return None
+    for date_format in ("%Y-%m-%d", "%d/%m/%Y", "%d/%m/%Y %H:%M:%S"):
+        try:
+            return datetime.strptime(value, date_format)
+        except ValueError:
+            continue
+    return None
 
 
 def format_currency(amount: float, currency_symbol: str) -> str:
@@ -62,34 +93,51 @@ def split_response_records(responses: list[dict]) -> tuple[list[dict], list[dict
     deductions = []
     
     for row in responses:
-        entry_type = (row.get("ENTRY TYPE") or "").strip()
+        entry_type = get_value(row, "ENTRY TYPE", "Untitled Question", "TYPE", "ENTRYTYPE").upper()
         
         if entry_type == "BUSINESS SPONSORSHIP":
             sponsors.append({
-                "sponsor_name": row.get("SPONSOR NAME", ""),
+                "sponsor_name": get_value(row, "SPONSOR NAME"),
                 "category": "",
-                "pledged_amount": parse_amount(row.get("AMOUNT RECEIVED")),
-                "received_amount": parse_amount(row.get("AMOUNT RECEIVED")),
-                "received_date": row.get("PAYMENT DATE", ""),
+                "pledged_amount": parse_amount(get_value(row, "AMOUNT RECEIVED", "AMPOUNT RECEIVED")),
+                "received_amount": parse_amount(get_value(row, "AMOUNT RECEIVED", "AMPOUNT RECEIVED")),
+                "received_date": get_value(row, "PAYMENT DATE"),
                 "status": "Received",
-                "contact_person": row.get("SPONSOR CONTCT NUMBER", ""),
-                "phone": row.get("SPONSOR CONTCT NUMBER", ""),
-                "remarks": row.get("REMARKS", ""),
+                "contact_person": get_value(row, "SPONSOR CONTCT NUMBER", "SPONSOR CONTACT NUMBER"),
+                "phone": get_value(row, "SPONSOR CONTCT NUMBER", "SPONSOR CONTACT NUMBER"),
+                "reference": get_value(row, "PAYMENT REFERENCE"),
+                "remarks": get_value(row, "REMARKS"),
             })
         
         elif entry_type == "EVENT EXPENDITURE":
             deductions.append({
-                "entry_date": row.get("EXPENDITURE DATE", ""),
-                "category": row.get("VENDOR NAME", ""),
-                "description": row.get("EXPENDITURE DETAILS", ""),
-                "amount": parse_amount(row.get("EXPENDITURE AMOUNT PAID")),
-                "payment_mode": row.get("MODE OF PAYMENT", ""),
-                "reference": row.get("PAYMENT REFERENCE", ""),
+                "entry_date": get_value(row, "EXPENDITURE DATE"),
+                "category": get_value(row, "VENDOR NAME"),
+                "description": get_value(row, "EXPENDITURE DETAILS", "DESCRIPTION"),
+                "amount": parse_amount(get_value(row, "EXPENDITURE AMOUNT PAID")),
+                "payment_mode": get_value(row, "MODE OF PAYMENT__2", "EXPENDITURE MODE OF PAYMENT", "MODE OF PAYMENT 2", "MODE OF PAYMENT"),
+                "reference": get_value(row, "PAYMENT REFERENCE__2", "EXPENDITURE PAYMENT REFERENCE", "PAYMENT REFERENCE 2", "PAYMENT REFERENCE"),
                 "remarks": "",
                 "entered_by": "",
             })
     
     return sponsors, deductions
+
+
+def extract_wing(value: str) -> str:
+    normalized = value.strip().upper()
+    match = re.search(r"\b([A-Z])\b", normalized)
+    if match:
+        return match.group(1)
+    return normalized or "Unknown"
+
+
+def derive_owner_status(paid_amount: float, expected_per_owner: float) -> str:
+    if paid_amount <= 0:
+        return "Pending"
+    if expected_per_owner > 0 and paid_amount >= expected_per_owner:
+        return "Paid"
+    return "Partial"
 
 
 def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[list[dict], dict[str, float], list[dict], list[dict], int]:
@@ -98,29 +146,35 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
     owner_records = []
 
     for owner in owners:
-        paid_amount = parse_amount(owner.get("paid_amount"))
-        wing = (owner.get("wing") or "Unknown").strip().upper() or "Unknown"
+        flat = get_value(owner, "flat", "FLAT NUMBER", "FLAT N UMBER")
+        owner_name = get_value(owner, "owner_name", "NAME", "OWNER NAME")
+        paid_amount = parse_amount(get_value(owner, "paid_amount", "AMOUNT PAID"))
+        wing = extract_wing(get_value(owner, "wing", "BLOCK"))
+        last_payment_date = get_value(owner, "last_payment_date", "PAYMENT DATE", "LAST PAYMENT DATE")
+        payment_mode = get_value(owner, "payment_mode", "PAYMENT MODE")
+        reference = get_value(owner, "reference", "PAYMENT REFERENCE NUMBER", "PAYENT REFERENCE NUMBER", "PAYMENT REFERENCE")
         block_totals[wing] += paid_amount
 
         owner_records.append(
             {
-                "flat": owner.get("flat", ""),
-                "owner_name": owner.get("owner_name", ""),
+                "flat": flat,
+                "owner_name": owner_name,
                 "wing": wing,
                 "expected_amount": expected_per_owner,
                 "paid_amount": paid_amount,
-                "last_payment_date": owner.get("last_payment_date", ""),
-                "payment_mode": owner.get("payment_mode", ""),
-                "reference": owner.get("reference", ""),
+                "last_payment_date": last_payment_date,
+                "payment_mode": payment_mode,
+                "reference": reference,
+                "status": derive_owner_status(paid_amount, expected_per_owner),
             }
         )
 
-        payment_date = parse_date(owner.get("last_payment_date"))
+        payment_date = parse_date(last_payment_date)
         if paid_amount > 0 and payment_date:
             recent_contributions.append(
                 {
-                    "label": owner.get("flat") or owner.get("owner_name") or "Owner",
-                    "detail": owner.get("owner_name") or "Owner",
+                    "label": flat or owner_name or "Owner",
+                    "detail": owner_name or "Owner",
                     "amount": paid_amount,
                     "channel": "Owner",
                     "date": payment_date.strftime("%Y-%m-%d"),
@@ -165,6 +219,7 @@ def build_sponsor_records(sponsors: list[dict]) -> tuple[list[dict], dict[str, i
                 "status": status,
                 "contact_person": sponsor.get("contact_person", ""),
                 "phone": sponsor.get("phone", ""),
+                "reference": sponsor.get("reference", ""),
                 "remarks": sponsor.get("remarks", ""),
             }
         )
