@@ -140,9 +140,7 @@ function renderDeductionsTable() {
         <tr>
           <th>Date</th>
           <th>Category</th>
-          <th>Description</th>
           <th>Amount</th>
-          <th>Entered By</th>
         </tr>
       </thead>
       <tbody>
@@ -152,9 +150,7 @@ function renderDeductionsTable() {
               <tr>
                 <td>${entry.entry_date}</td>
                 <td>${entry.category}</td>
-                <td>${entry.description}</td>
                 <td>${entry.formatted_amount}</td>
-                <td>${entry.entered_by}</td>
               </tr>
             `,
           )
