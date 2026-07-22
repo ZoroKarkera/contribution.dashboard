@@ -52,6 +52,18 @@ body {
   min-width: 0;
 }
 
+.hero-logo {
+  display: block;
+  width: clamp(76px, 10vw, 112px);
+  height: auto;
+  margin: 0 0 14px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  padding: 8px;
+}
+
 .eyebrow,
 .panel-kicker {
   margin: 0 0 10px;
@@ -346,6 +358,11 @@ canvas {
   .summary-grid,
   .public-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-logo {
+    width: 84px;
+    margin-bottom: 12px;
   }
 
   .table {

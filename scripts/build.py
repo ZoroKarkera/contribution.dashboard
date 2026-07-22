@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import csv
+import html
 import json
 import shutil
 from collections import defaultdict
@@ -347,6 +348,8 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
             "year": settings.get("festival_year", ""),
             "generated_at": current_ist_timestamp(),
             "currency_symbol": currency_symbol,
+            "logo_url": settings.get("logo_url", ""),
+            "logo_alt": settings.get("logo_alt", "Society logo"),
         },
         "summary": {
             "goal_amount": goal_amount,
@@ -433,9 +436,19 @@ def build_email_summary(payload: dict) -> str:
 
 def render_dashboard(template_name: str, title: str, subtitle: str, payload: dict) -> str:
     template = (TEMPLATES_DIR / template_name).read_text(encoding="utf-8")
+    logo_url = str(payload["meta"].get("logo_url", "")).strip()
+    logo_alt = str(payload["meta"].get("logo_alt", "Society logo")).strip() or "Society logo"
+    logo_html = ""
+    if logo_url:
+        logo_html = (
+            f'<img class="hero-logo" src="{html.escape(logo_url, quote=True)}" '
+            f'alt="{html.escape(logo_alt, quote=True)}" />'
+        )
+
     replacements = {
         "{{TITLE}}": title,
         "{{SUBTITLE}}": subtitle,
+        "{{LOGO_HTML}}": logo_html,
         "{{SOCIETY_NAME}}": payload["meta"]["society_name"],
         "{{YEAR}}": str(payload["meta"]["year"]),
         "{{GENERATED_AT}}": payload["meta"]["generated_at"],
