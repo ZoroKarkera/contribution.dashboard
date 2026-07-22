@@ -42,6 +42,14 @@ jobs:
       - name: Build dashboard
         run: python scripts/build.py
 
+      - name: Archive dashboard HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-html
+          path: |
+            dist/index.html
+            dist/admin.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
@@ -74,6 +82,14 @@ jobs:
 
       - name: Build dashboard payload
         run: python scripts/build.py
+
+      - name: Archive nightly dashboard HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-dashboard-html
+          path: |
+            dist/index.html
+            dist/admin.html
 
       - name: Send nightly admin summary
         if: github.event.schedule == '30 16 * * *'
