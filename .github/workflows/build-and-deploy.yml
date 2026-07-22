@@ -1,0 +1,89 @@
+﻿name: Build and Deploy Dashboard
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+    - cron: "30 16 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download latest sheet exports
+        env:
+          OWNERS_CSV_URL: ${{ vars.OWNERS_CSV_URL }}
+          RESPONSE_CSV_URL: ${{ vars.RESPONSE_CSV_URL }}
+        run: python scripts/fetch_sheets.py
+
+      - name: Build dashboard
+        run: python scripts/build.py
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  nightly-email:
+    if: github.event_name == 'schedule' && github.event.schedule == '30 16 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download latest sheet exports
+        env:
+          OWNERS_CSV_URL: ${{ vars.OWNERS_CSV_URL }}
+          RESPONSE_CSV_URL: ${{ vars.RESPONSE_CSV_URL }}
+        run: python scripts/fetch_sheets.py
+
+      - name: Build dashboard payload
+        run: python scripts/build.py
+
+      - name: Send nightly admin summary
+        if: github.event.schedule == '30 16 * * *'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: Nightly Ganesh Fund Update - ${{ github.repository }}
+          to: ${{ secrets.ADMIN_EMAILS }}
+          from: ${{ secrets.EMAIL_FROM }}
+          body: file://dist/email-summary.txt

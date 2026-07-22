@@ -1,0 +1,7 @@
+flat,owner_name,wing,expected_amount,paid_amount,last_payment_date,status,payment_mode,reference,remarks
+A-101,Amit Shah,A,2500,2500,2026-07-10,Paid,UPI,UPI-84301,Confirmed by treasurer
+A-204,Neha Patil,A,2500,1500,2026-07-16,Partial,Cash,CASH-104,Remaining due next week
+B-105,Rahul Joshi,B,2500,2500,2026-07-18,Paid,Cheque,CHQ-553,Cheque cleared
+B-302,Sonal Mehta,B,2500,0,,Pending,,,Out of station
+C-110,Arjun Rao,C,2500,2500,2026-07-20,Paid,UPI,UPI-84399,
+C-408,Priya Kulkarni,C,2500,1000,2026-07-21,Partial,UPI,UPI-84412,Requested reminder
