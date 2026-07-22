@@ -37,7 +37,7 @@ body {
 
 .hero {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 24px;
   align-items: end;
   padding: 32px;
@@ -46,6 +46,10 @@ body {
   background: linear-gradient(135deg, rgba(255, 247, 236, 0.92), rgba(255, 255, 255, 0.72));
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
+}
+
+.hero-copy {
+  min-width: 0;
 }
 
 .eyebrow,
@@ -66,7 +70,8 @@ body {
 
 .hero h1 {
   font-size: clamp(2.2rem, 5vw, 4.6rem);
-  max-width: 12ch;
+  max-width: 20ch;
+  text-wrap: balance;
 }
 
 .hero-subtitle,
@@ -113,11 +118,28 @@ main {
 }
 
 .summary-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .public-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.summary-card {
+  min-width: 0;
+}
+
+.summary-card.summary-card--primary {
+  grid-column: span 3;
+}
+
+.summary-card.summary-card--block {
+  grid-column: span 2;
+}
+
+.summary-card.summary-card--secondary,
+.summary-card.summary-card--expense {
+  grid-column: span 6;
 }
 
 .chart-grid,
@@ -311,6 +333,13 @@ canvas {
   .summary-grid,
   .public-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-card.summary-card--primary,
+  .summary-card.summary-card--block,
+  .summary-card.summary-card--secondary,
+  .summary-card.summary-card--expense {
+    grid-column: span 1;
   }
 }
 

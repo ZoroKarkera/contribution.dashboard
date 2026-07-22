@@ -140,6 +140,20 @@ def derive_owner_status(paid_amount: float, expected_per_owner: float) -> str:
     return "Partial"
 
 
+def wing_sort_rank(wing: str) -> tuple[int, str]:
+    order = {"A": 0, "B": 1, "C": 2}
+    normalized = (wing or "Unknown").strip().upper()
+    return (order.get(normalized, 99), normalized)
+
+
+def flat_sort_key(flat: str) -> tuple:
+    normalized = (flat or "").strip().upper()
+    numbers = tuple(int(value) for value in re.findall(r"\d+", normalized))
+    if numbers:
+        return (0, numbers, normalized)
+    return (1, normalized)
+
+
 def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[list[dict], dict[str, float], list[dict], list[dict], int]:
     block_totals: dict[str, float] = defaultdict(float)
     recent_contributions = []
@@ -182,7 +196,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
                 }
             )
 
-    owner_records.sort(key=lambda item: (item["wing"], item["flat"]))
+    owner_records.sort(key=lambda item: (wing_sort_rank(item["wing"]), flat_sort_key(item["flat"])))
     owner_paid_count = sum(1 for item in owner_records if item["paid_amount"] >= expected_per_owner and expected_per_owner > 0)
     pending_owners = [
         {
@@ -194,7 +208,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
         for item in owner_records
         if item["paid_amount"] < expected_per_owner
     ]
-    pending_owners.sort(key=lambda item: (item["wing"], item["flat"]))
+    pending_owners.sort(key=lambda item: (wing_sort_rank(item["wing"]), flat_sort_key(item["flat"])))
     return owner_records, dict(block_totals), pending_owners, recent_contributions, owner_paid_count
 
 
