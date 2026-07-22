@@ -171,15 +171,18 @@ function renderRecentContributions() {
     <div class="list">
       ${data.recent_contributions
         .map(
-          (item) => `
+          (item) => {
+            const isSponsor = ["sponsor", "external sponsor"].includes(String(item.channel || "").trim().toLowerCase());
+            return `
             <div class="list-item">
               <div>
                 <strong>${item.channel === "Owner" ? `${item.wing}-${item.label}` : item.label}</strong>
-                <span>${item.channel === "Sponsor" ? `External Sponsor · ${item.date}` : `${item.channel} · ${item.detail} · ${item.date}`}</span>
+                <span>${isSponsor ? `External Sponsor · ${item.date}` : `${item.channel} · ${item.detail} · ${item.date}`}</span>
               </div>
               <div class="amount-pill">${formatCurrency(item.amount)}</div>
             </div>
-          `,
+          `;
+          },
         )
         .join("")}
     </div>
