@@ -4,7 +4,7 @@ import csv
 import json
 import shutil
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import re
 
@@ -78,6 +78,11 @@ def parse_date(value: str | None) -> datetime | None:
 
 def format_currency(amount: float, currency_symbol: str) -> str:
     return f"{currency_symbol}{amount:,.0f}"
+
+
+def current_ist_timestamp() -> str:
+    ist = timezone(timedelta(hours=5, minutes=30))
+    return datetime.now(timezone.utc).astimezone(ist).strftime("%Y-%m-%d %H:%M IST")
 
 
 def sort_key_by_date(record: dict, key: str) -> tuple[datetime, str]:
@@ -340,7 +345,7 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
             "subtitle": settings.get("dashboard_subtitle", ""),
             "society_name": settings.get("society_name", ""),
             "year": settings.get("festival_year", ""),
-            "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "generated_at": current_ist_timestamp(),
             "currency_symbol": currency_symbol,
         },
         "summary": {
