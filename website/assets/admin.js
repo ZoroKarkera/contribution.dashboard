@@ -174,8 +174,8 @@ function renderRecentContributions() {
           (item) => `
             <div class="list-item">
               <div>
-                <strong>${item.label}</strong>
-                <span>${item.channel} · ${item.detail} · ${item.date}</span>
+                <strong>${item.channel === "Owner" ? `${item.wing}-${item.label}` : item.label}</strong>
+                <span>${item.channel === "Sponsor" ? "External Sponsor" : item.channel} · ${item.detail} · ${item.date}</span>
               </div>
               <div class="amount-pill">${formatCurrency(item.amount)}</div>
             </div>
