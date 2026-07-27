@@ -1,6 +1,6 @@
 # Ganesha Chaturthi Contribution/Expenditure Dashboard
 
-Free, static contribution tracking for a housing society event using only Google Sheets as the live data source, Python for report generation, and GitHub Pages for publishing.
+Free, static contribution tracking for a housing society event using only Google Sheets as the live data source, Python for report generation, and GitHub Pages for publishing it.
 
 ## Architecture
 
