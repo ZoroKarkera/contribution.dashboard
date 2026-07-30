@@ -37,10 +37,10 @@ body {
 
 .hero {
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
+  flex-wrap: nowrap;
+  gap: 20px;
   align-items: stretch;
-  padding: 32px;
+  padding: 28px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 28px;
   background: linear-gradient(135deg, rgba(255, 247, 236, 0.92), rgba(255, 255, 255, 0.72));
@@ -49,13 +49,14 @@ body {
 }
 
 .hero-copy {
-  flex: 1 1 320px;
+  flex: 1 1 0;
   min-width: 0;
 }
 
 .hero-side {
-  flex: 1 1 300px;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 46%;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -420,24 +421,61 @@ canvas {
     border-radius: 20px;
   }
 
+  .hero {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
+  }
+
+  .hero-subtitle {
+    font-size: 0.82rem;
+    margin-top: 8px;
+  }
+
+  .eyebrow {
+    font-size: 0.6rem;
+  }
+
+  .hero-side {
+    max-width: 48%;
+  }
+
   .payment-card {
-    padding: 14px 16px;
+    padding: 10px 12px;
+    border-radius: 14px;
   }
 
   .payment-card h2 {
-    font-size: 1rem;
+    font-size: 0.82rem;
   }
 
   .payment-card-body {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 12px;
-    margin-top: 10px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 8px;
   }
 
   .payment-qr {
-    width: clamp(72px, 24vw, 110px);
-    padding: 8px;
-    border-radius: 14px;
+    width: 100%;
+    max-width: 120px;
+    padding: 6px;
+    border-radius: 10px;
+    margin: 0 auto;
+  }
+
+  .payment-details {
+    gap: 6px;
+  }
+
+  .payment-detail span {
+    font-size: 0.58rem;
+  }
+
+  .payment-detail strong {
+    font-size: 0.75rem;
   }
 
   .summary-grid,
