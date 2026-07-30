@@ -36,10 +36,10 @@ body {
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 24px;
-  align-items: end;
+  align-items: stretch;
   padding: 32px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 28px;
@@ -49,13 +49,16 @@ body {
 }
 
 .hero-copy {
+  flex: 1 1 320px;
   min-width: 0;
 }
 
 .hero-side {
-  display: grid;
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  justify-items: stretch;
 }
 
 .hero-logo {
@@ -402,21 +405,6 @@ canvas {
   .progress-panel {
     grid-template-columns: 1fr;
   }
-
-  .hero-side {
-    justify-items: stretch;
-  }
-}
-
-@media (max-width: 640px) {
-  .hero {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .payment-card {
-    width: 100%;
-  }
 }
 
 @media (max-width: 720px) {
@@ -432,38 +420,24 @@ canvas {
     border-radius: 20px;
   }
 
-  .hero {
-    gap: 14px;
-    padding: 16px;
-  }
-
   .payment-card {
-    min-width: 0;
-    padding: 12px 14px;
+    padding: 14px 16px;
   }
 
   .payment-card h2 {
-    font-size: 0.95rem;
+    font-size: 1rem;
   }
 
   .payment-card-body {
     grid-template-columns: auto minmax(0, 1fr);
-    gap: 10px;
+    gap: 12px;
     margin-top: 10px;
   }
 
   .payment-qr {
-    width: clamp(60px, 22vw, 96px);
-    padding: 6px;
-    border-radius: 12px;
-  }
-
-  .payment-detail span {
-    font-size: 0.62rem;
-  }
-
-  .payment-detail strong {
-    font-size: 0.8rem;
+    width: clamp(72px, 24vw, 110px);
+    padding: 8px;
+    border-radius: 14px;
   }
 
   .summary-grid,
