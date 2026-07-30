@@ -10,7 +10,7 @@ on:
         description: Deploy dashboard to GitHub Pages
         required: false
         type: boolean
-        default: false
+        default: true
       generate_preview:
         description: Generate visual preview screenshots in workflow summary
         required: false
