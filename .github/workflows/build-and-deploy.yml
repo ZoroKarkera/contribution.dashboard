@@ -10,7 +10,12 @@ on:
         description: Deploy dashboard to GitHub Pages
         required: false
         type: boolean
-        default: true
+        default: false
+      generate_preview:
+        description: Generate visual preview screenshots in workflow summary
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "*/15 * * * *"
     - cron: "30 16 * * *"
@@ -84,6 +89,71 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  preview-pages:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_preview }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download built site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-site
+          path: dist
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Capture dashboard screenshots
+        shell: bash
+        run: |
+          mkdir -p preview
+          python3 -m http.server 4173 --directory dist >/tmp/preview-server.log 2>&1 &
+          SERVER_PID=$!
+          trap "kill $SERVER_PID" EXIT
+          node - <<'NODE'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+
+            await page.goto('http://127.0.0.1:4173/index.html', { waitUntil: 'networkidle' });
+            await page.screenshot({ path: 'preview/index.png', fullPage: true });
+
+            await page.goto('http://127.0.0.1:4173/admin.html', { waitUntil: 'networkidle' });
+            await page.screenshot({ path: 'preview/admin.png', fullPage: true });
+
+            await browser.close();
+          })();
+          NODE
+
+      - name: Upload preview screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-preview-screenshots
+          path: preview
+
+      - name: Add preview to workflow summary
+        shell: bash
+        run: |
+          {
+            echo "## Dashboard Visual Preview"
+            echo ""
+            echo "### Public page (`index.html`)"
+            echo "![Public dashboard preview](preview/index.png)"
+            echo ""
+            echo "### Admin page (`admin.html`)"
+            echo "![Admin dashboard preview](preview/admin.png)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   nightly-email:
     if: github.event_name == 'schedule' && github.event.schedule == '30 16 * * *'
