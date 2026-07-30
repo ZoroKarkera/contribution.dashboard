@@ -37,7 +37,7 @@ body {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 320px);
+  grid-template-columns: 1fr;
   gap: 16px;
   padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.55);
