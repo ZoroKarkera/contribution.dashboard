@@ -137,6 +137,7 @@ jobs:
           NODE
 
       - name: Upload preview screenshots
+        id: upload_preview
         uses: actions/upload-artifact@v4
         with:
           name: dashboard-preview-screenshots
@@ -145,14 +146,18 @@ jobs:
       - name: Add preview to workflow summary
         shell: bash
         run: |
+          INDEX_B64=$(base64 -w 0 preview/index.png)
+          ADMIN_B64=$(base64 -w 0 preview/admin.png)
           {
             echo "## Dashboard Visual Preview"
             echo ""
-            echo "### Public page (`index.html`)"
-            echo "![Public dashboard preview](preview/index.png)"
+            echo "### Public page (index.html)"
+            echo "<img alt=\"Public dashboard preview\" src=\"data:image/png;base64,$INDEX_B64\" style=\"max-width:100%;height:auto;border:1px solid #d0d7de;border-radius:8px;\" />"
             echo ""
-            echo "### Admin page (`admin.html`)"
-            echo "![Admin dashboard preview](preview/admin.png)"
+            echo "### Admin page (admin.html)"
+            echo "<img alt=\"Admin dashboard preview\" src=\"data:image/png;base64,$ADMIN_B64\" style=\"max-width:100%;height:auto;border:1px solid #d0d7de;border-radius:8px;\" />"
+            echo ""
+            echo "Screenshot artifact: ${{ steps.upload_preview.outputs.artifact-url }}"
           } >> "$GITHUB_STEP_SUMMARY"
 
   nightly-email:
