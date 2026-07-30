@@ -350,6 +350,14 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
             "currency_symbol": currency_symbol,
             "logo_url": settings.get("logo_url", ""),
             "logo_alt": settings.get("logo_alt", "Society logo"),
+            "payment_details": {
+                "account_number": settings.get("payment_account_number", ""),
+                "ifsc_code": settings.get("payment_ifsc_code", ""),
+                "home_branch": settings.get("payment_home_branch", ""),
+                "upi_id": settings.get("payment_upi_id", ""),
+                "qr_code_url": settings.get("payment_qr_code_url", ""),
+                "qr_code_alt": settings.get("payment_qr_code_alt", "Payment QR code"),
+            },
         },
         "summary": {
             "goal_amount": goal_amount,
@@ -438,17 +446,52 @@ def render_dashboard(template_name: str, title: str, subtitle: str, payload: dic
     template = (TEMPLATES_DIR / template_name).read_text(encoding="utf-8")
     logo_url = str(payload["meta"].get("logo_url", "")).strip()
     logo_alt = str(payload["meta"].get("logo_alt", "Society logo")).strip() or "Society logo"
+    payment_details = payload["meta"].get("payment_details", {})
     logo_html = ""
+    payment_panel_html = ""
     if logo_url:
         logo_html = (
             f'<img class="hero-logo" src="{html.escape(logo_url, quote=True)}" '
             f'alt="{html.escape(logo_alt, quote=True)}" />'
         )
 
+    payment_rows = [
+        ("A/c No.", str(payment_details.get("account_number", "")).strip()),
+        ("IFSC Code", str(payment_details.get("ifsc_code", "")).strip()),
+        ("Home Branch", str(payment_details.get("home_branch", "")).strip()),
+        ("UPI ID", str(payment_details.get("upi_id", "")).strip()),
+    ]
+    payment_qr_url = str(payment_details.get("qr_code_url", "")).strip()
+    qr_alt = str(payment_details.get("qr_code_alt", "Payment QR code")).strip() or "Payment QR code"
+    visible_rows = [(label, value) for label, value in payment_rows if value]
+    if visible_rows or payment_qr_url:
+        details_markup = "".join(
+            f'<div class="payment-detail"><span>{html.escape(label)}</span><strong>{html.escape(value)}</strong></div>'
+            for label, value in visible_rows
+        )
+        qr_markup = ""
+        if payment_qr_url:
+            qr_markup = (
+                '<div class="payment-qr">'
+                f'<img src="{html.escape(payment_qr_url, quote=True)}" alt="{html.escape(qr_alt, quote=True)}" />'
+                '</div>'
+            )
+        payment_panel_html = (
+            '<section class="payment-card">'
+            '<p class="panel-kicker">Payment Options</p>'
+            '<h2>Pay contribution</h2>'
+            '<div class="payment-card-body">'
+            f'{qr_markup}'
+            f'<div class="payment-details">{details_markup}</div>'
+            '</div>'
+            '</section>'
+        )
+
     replacements = {
         "{{TITLE}}": title,
         "{{SUBTITLE}}": subtitle,
         "{{LOGO_HTML}}": logo_html,
+        "{{PAYMENT_PANEL_HTML}}": payment_panel_html,
         "{{SOCIETY_NAME}}": payload["meta"]["society_name"],
         "{{YEAR}}": str(payload["meta"]["year"]),
         "{{GENERATED_AT}}": payload["meta"]["generated_at"],
