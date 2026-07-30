@@ -27,9 +27,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -56,18 +53,35 @@ jobs:
             dist/index.html
             dist/admin.html
 
+      - name: Archive dashboard site for Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-site
+          path: dist
+
+  deploy-pages:
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.deploy_pages) }}
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download built site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-site
+          path: dist
+
       - name: Configure Pages
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pages }}
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pages }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
       - name: Deploy to GitHub Pages
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pages }}
         id: deployment
         uses: actions/deploy-pages@v4
 
