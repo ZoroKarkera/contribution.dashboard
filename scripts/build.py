@@ -478,8 +478,7 @@ def render_dashboard(template_name: str, title: str, subtitle: str, payload: dic
             )
         payment_panel_html = (
             '<section class="payment-card">'
-            '<p class="panel-kicker">Payment Options</p>'
-            '<h2>Pay contribution</h2>'
+            '<h2>Chaturthi Fund collection account details.</h2>'
             '<div class="payment-card-body">'
             f'{qr_markup}'
             f'<div class="payment-details">{details_markup}</div>'
