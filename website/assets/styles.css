@@ -398,13 +398,12 @@ canvas {
   .summary-grid,
   .chart-grid,
   .table-grid,
-  .progress-panel,
-  .hero {
+  .progress-panel {
     grid-template-columns: 1fr;
   }
 
   .hero-side {
-    justify-items: start;
+    justify-items: stretch;
   }
 }
 
@@ -421,12 +420,38 @@ canvas {
     border-radius: 20px;
   }
 
+  .hero {
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .payment-card {
+    min-width: 0;
+    padding: 12px 14px;
+  }
+
+  .payment-card h2 {
+    font-size: 0.95rem;
+  }
+
   .payment-card-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    margin-top: 10px;
   }
 
   .payment-qr {
-    width: min(180px, 100%);
+    width: clamp(60px, 22vw, 96px);
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  .payment-detail span {
+    font-size: 0.62rem;
+  }
+
+  .payment-detail strong {
+    font-size: 0.8rem;
   }
 
   .summary-grid,
