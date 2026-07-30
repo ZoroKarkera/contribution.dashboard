@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      deploy_pages:
+        description: Deploy dashboard to GitHub Pages
+        required: false
+        type: boolean
+        default: true
   schedule:
     - cron: "*/15 * * * *"
     - cron: "30 16 * * *"
@@ -51,14 +57,17 @@ jobs:
             dist/admin.html
 
       - name: Configure Pages
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pages }}
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pages }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
       - name: Deploy to GitHub Pages
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pages }}
         id: deployment
         uses: actions/deploy-pages@v4
 
