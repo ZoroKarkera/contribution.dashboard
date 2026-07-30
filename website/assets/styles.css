@@ -191,6 +191,7 @@ body {
 
 main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
   margin-top: 24px;
 }
@@ -244,6 +245,7 @@ main {
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
+  min-width: 0;
 }
 
 .summary-card {
