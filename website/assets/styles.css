@@ -146,7 +146,7 @@ body {
 }
 
 .payment-qr {
-  width: 96px;
+  width: clamp(140px, 22vw, 180px);
   padding: 6px;
   border-radius: 10px;
   background: #fff;
