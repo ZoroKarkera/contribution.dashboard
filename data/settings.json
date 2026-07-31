@@ -7,9 +7,9 @@
   "dashboard_subtitle": "Live collection progress for owners and sponsors",
   "logo_url": "assets/logo.png",
   "logo_alt": "Sipani Viveza Society Logo",
-  "payment_account_number": "2055384005",
-  "payment_ifsc_code": "KKBK0008334",
-  "payment_upi_id": "7675946060@kotakbank",
+  "payment_account_number": "594302010016847",
+  "payment_ifsc_code": "UBIN0559431",
+  "payment_upi_id": "ananaya@uboi",
   "payment_qr_code_url": "assets/payment.png",
   "payment_qr_code_alt": "Contribution payment QR code"
 }
