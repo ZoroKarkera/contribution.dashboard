@@ -173,6 +173,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
         last_payment_date = get_value(owner, "last_payment_date", "PAYMENT DATE", "LAST PAYMENT DATE")
         payment_mode = get_value(owner, "payment_mode", "PAYMENT MODE")
         reference = get_value(owner, "reference", "PAYMENT REFERENCE NUMBER", "PAYENT REFERENCE NUMBER", "PAYMENT REFERENCE")
+        entry_timestamp = get_value(owner, "timestamp", "TIMESTAMP", "ENTRY TIMESTAMP", "SUBMITTED AT", "SUBMISSION TIME")
         block_totals[wing] += paid_amount
 
         owner_records.append(
@@ -191,6 +192,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
 
         payment_date = parse_date(last_payment_date)
         if paid_amount > 0 and payment_date:
+            sort_dt = parse_date(entry_timestamp) or payment_date
             recent_contributions.append(
                 {
                     "label": flat or owner_name or "Owner",
@@ -198,6 +200,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
                     "amount": paid_amount,
                     "channel": "Owner",
                     "date": payment_date.strftime("%Y-%m-%d"),
+                    "sort_timestamp": sort_dt.strftime("%Y-%m-%d %H:%M:%S"),
                     "wing": wing,
                 }
             )
@@ -253,6 +256,7 @@ def build_sponsor_records(sponsors: list[dict]) -> tuple[list[dict], dict[str, i
                     "amount": received_amount,
                     "channel": "Sponsor",
                     "date": received_date.strftime("%Y-%m-%d"),
+                    "sort_timestamp": received_date.strftime("%Y-%m-%d %H:%M:%S"),
                     "wing": "Sponsor",
                 }
             )
@@ -329,7 +333,7 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
     progress_percent = round((total_collected / goal_amount) * 100, 1) if goal_amount else 0.0
 
     recent_contributions = owner_recent + sponsor_recent
-    recent_contributions.sort(key=lambda item: sort_key_by_date(item, "date"), reverse=True)
+    recent_contributions.sort(key=lambda item: item.get("sort_timestamp") or "", reverse=True)
 
     public_blocks = []
     for wing in ["A", "B", "C"]:
