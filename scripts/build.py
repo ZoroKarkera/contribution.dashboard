@@ -265,7 +265,9 @@ def build_deduction_records(deductions: list[dict], currency_symbol: str) -> tup
     records = []
     for item in deductions:
         amount = parse_amount(item.get("amount"))
-        entry_date = (item.get("entry_date") or "").strip()
+        raw_entry_date = (item.get("entry_date") or "").strip()
+        parsed_entry_date = parse_date(raw_entry_date)
+        entry_date = parsed_entry_date.strftime("%Y-%m-%d") if parsed_entry_date else raw_entry_date
         records.append(
             {
                 "entry_date": entry_date,
@@ -327,7 +329,7 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
     progress_percent = round((total_collected / goal_amount) * 100, 1) if goal_amount else 0.0
 
     recent_contributions = owner_recent + sponsor_recent
-    recent_contributions.sort(key=lambda item: item["date"], reverse=True)
+    recent_contributions.sort(key=lambda item: sort_key_by_date(item, "date"), reverse=True)
 
     public_blocks = []
     for wing in ["A", "B", "C"]:
