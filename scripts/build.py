@@ -426,16 +426,38 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
 
 
 def build_email_summary(payload: dict) -> str:
+    today = str(payload['meta']['generated_at'])[:10]
+    owner_today_total = sum(
+        row['amount']
+        for row in payload['recent_contributions']
+        if row.get('channel') == 'Owner' and str(row.get('date', '')) == today
+    )
+    sponsor_today_total = sum(
+        row['amount']
+        for row in payload['recent_contributions']
+        if row.get('channel') == 'Sponsor' and str(row.get('date', '')) == today
+    )
+    expenditure_today_total = sum(
+        row['amount']
+        for row in payload['deductions_recent']
+        if str(row.get('entry_date', '')) == today
+    )
+
     lines = [
         f"{payload['meta']['title']} - Nightly Admin Update",
         f"Generated at: {payload['meta']['generated_at']}",
         "",
         "Collection Summary",
-        f"- Target amount: {payload['summary']['formatted_goal']}",
-        f"- Total collected: {payload['summary']['formatted_total']}",
-        f"- External sponsors: {payload['summary']['formatted_sponsor_total']}",
+        f"- Total collected from owners/residents: {payload['summary']['formatted_owner_total']}",
+        f"- Total collected from sponsors: {payload['summary']['formatted_sponsor_total']}",
+        f"- Total collected overall: {payload['summary']['formatted_total']}",
         f"- Overall spent: {payload['summary']['formatted_total_spent']}",
         f"- Net balance: {payload['summary']['formatted_net_balance']}",
+        "",
+        "Today",
+        f"- Owners/residents collected today: {format_currency(owner_today_total, payload['meta']['currency_symbol'])}",
+        f"- Sponsors collected today: {format_currency(sponsor_today_total, payload['meta']['currency_symbol'])}",
+        f"- Expenditure today: {format_currency(expenditure_today_total, payload['meta']['currency_symbol'])}",
         "",
         "Latest 10 Contributions",
     ]
