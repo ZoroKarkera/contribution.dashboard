@@ -385,6 +385,18 @@ canvas {
   border: 1px solid var(--line);
 }
 
+.list-item--owner {
+  background: rgba(217, 107, 26, 0.10);
+  border-color: rgba(217, 107, 26, 0.28);
+  border-left: 4px solid var(--brand-strong);
+}
+
+.list-item--sponsor {
+  background: rgba(15, 107, 107, 0.10);
+  border-color: rgba(15, 107, 107, 0.28);
+  border-left: 4px solid #0f6b6b;
+}
+
 .list-item strong {
   display: block;
 }

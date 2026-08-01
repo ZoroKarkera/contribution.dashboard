@@ -173,8 +173,9 @@ function renderRecentContributions() {
         .map(
           (item) => {
             const isSponsor = ["sponsor", "external sponsor"].includes(String(item.channel || "").trim().toLowerCase());
+            const channelClass = isSponsor ? "list-item--sponsor" : "list-item--owner";
             return `
-            <div class="list-item">
+            <div class="list-item ${channelClass}">
               <div>
                 <strong>${item.channel === "Owner" ? `${item.wing}-${item.label}` : item.label}</strong>
                 <span>${isSponsor ? `External Sponsor · ${item.date}` : `${item.channel} · ${item.detail} · ${item.date}`}</span>
