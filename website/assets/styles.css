@@ -385,6 +385,18 @@ canvas {
   border: 1px solid var(--line);
 }
 
+.list-item--owner {
+  background: rgba(217, 107, 26, 0.10);
+  border-color: rgba(217, 107, 26, 0.28);
+  border-left: 4px solid var(--brand-strong);
+}
+
+.list-item--sponsor {
+  background: rgba(15, 107, 107, 0.10);
+  border-color: rgba(15, 107, 107, 0.28);
+  border-left: 4px solid #0f6b6b;
+}
+
 .list-item strong {
   display: block;
 }
@@ -405,6 +417,25 @@ canvas {
 .empty-state {
   margin: 0;
   padding: 16px 0;
+}
+
+.site-credits {
+  margin-top: 28px;
+  padding: 16px 0 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+
+.site-credits a {
+  color: var(--brand-strong);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.site-credits a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 980px) {

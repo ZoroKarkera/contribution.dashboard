@@ -100,6 +100,7 @@ def split_response_records(responses: list[dict]) -> tuple[list[dict], list[dict
     
     for row in responses:
         entry_type = get_value(row, "ENTRY TYPE", "Untitled Question", "TYPE", "ENTRYTYPE").upper()
+        timestamp = get_value(row, "Timestamp", "TIMESTAMP", "ENTRY TIMESTAMP", "SUBMITTED AT", "SUBMISSION TIME")
         
         if entry_type == "BUSINESS SPONSORSHIP":
             sponsors.append({
@@ -113,6 +114,7 @@ def split_response_records(responses: list[dict]) -> tuple[list[dict], list[dict
                 "phone": get_value(row, "SPONSOR CONTCT NUMBER", "SPONSOR CONTACT NUMBER"),
                 "reference": get_value(row, "PAYMENT REFERENCE"),
                 "remarks": get_value(row, "REMARKS"),
+                "timestamp": timestamp,
             })
         
         elif entry_type == "EVENT EXPENDITURE":
@@ -125,6 +127,7 @@ def split_response_records(responses: list[dict]) -> tuple[list[dict], list[dict
                 "reference": get_value(row, "PAYMENT REFERENCE__2", "EXPENDITURE PAYMENT REFERENCE", "PAYMENT REFERENCE 2", "PAYMENT REFERENCE"),
                 "remarks": "",
                 "entered_by": "",
+                "timestamp": timestamp,
             })
     
     return sponsors, deductions
@@ -173,6 +176,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
         last_payment_date = get_value(owner, "last_payment_date", "PAYMENT DATE", "LAST PAYMENT DATE")
         payment_mode = get_value(owner, "payment_mode", "PAYMENT MODE")
         reference = get_value(owner, "reference", "PAYMENT REFERENCE NUMBER", "PAYENT REFERENCE NUMBER", "PAYMENT REFERENCE")
+        entry_timestamp = get_value(owner, "timestamp", "TIMESTAMP", "ENTRY TIMESTAMP", "SUBMITTED AT", "SUBMISSION TIME")
         block_totals[wing] += paid_amount
 
         owner_records.append(
@@ -191,6 +195,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
 
         payment_date = parse_date(last_payment_date)
         if paid_amount > 0 and payment_date:
+            sort_dt = parse_date(entry_timestamp) or payment_date
             recent_contributions.append(
                 {
                     "label": flat or owner_name or "Owner",
@@ -198,6 +203,7 @@ def build_owner_records(owners: list[dict], expected_per_owner: float) -> tuple[
                     "amount": paid_amount,
                     "channel": "Owner",
                     "date": payment_date.strftime("%Y-%m-%d"),
+                    "sort_timestamp": sort_dt.strftime("%Y-%m-%d %H:%M:%S"),
                     "wing": wing,
                 }
             )
@@ -246,6 +252,7 @@ def build_sponsor_records(sponsors: list[dict]) -> tuple[list[dict], dict[str, i
 
         received_date = parse_date(sponsor.get("received_date"))
         if received_amount > 0 and received_date:
+            sort_dt = parse_date(sponsor.get("timestamp")) or received_date
             recent_contributions.append(
                 {
                     "label": sponsor.get("sponsor_name") or "Sponsor",
@@ -253,6 +260,7 @@ def build_sponsor_records(sponsors: list[dict]) -> tuple[list[dict], dict[str, i
                     "amount": received_amount,
                     "channel": "Sponsor",
                     "date": received_date.strftime("%Y-%m-%d"),
+                    "sort_timestamp": sort_dt.strftime("%Y-%m-%d %H:%M:%S"),
                     "wing": "Sponsor",
                 }
             )
@@ -265,7 +273,11 @@ def build_deduction_records(deductions: list[dict], currency_symbol: str) -> tup
     records = []
     for item in deductions:
         amount = parse_amount(item.get("amount"))
-        entry_date = (item.get("entry_date") or "").strip()
+        raw_entry_date = (item.get("entry_date") or "").strip()
+        parsed_entry_date = parse_date(raw_entry_date)
+        entry_date = parsed_entry_date.strftime("%Y-%m-%d") if parsed_entry_date else raw_entry_date
+        sort_dt = parse_date(item.get("timestamp")) or parsed_entry_date
+        sort_timestamp = sort_dt.strftime("%Y-%m-%d %H:%M:%S") if sort_dt else ""
         records.append(
             {
                 "entry_date": entry_date,
@@ -277,10 +289,11 @@ def build_deduction_records(deductions: list[dict], currency_symbol: str) -> tup
                 "reference": item.get("reference", ""),
                 "remarks": item.get("remarks", ""),
                 "entered_by": item.get("entered_by", ""),
+                "sort_timestamp": sort_timestamp,
             }
         )
 
-    records.sort(key=lambda row: sort_key_by_date(row, "entry_date"), reverse=True)
+    records.sort(key=lambda row: row.get("sort_timestamp") or "", reverse=True)
     total_spent = sum(row["amount"] for row in records)
     return records, total_spent
 
@@ -327,7 +340,7 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
     progress_percent = round((total_collected / goal_amount) * 100, 1) if goal_amount else 0.0
 
     recent_contributions = owner_recent + sponsor_recent
-    recent_contributions.sort(key=lambda item: item["date"], reverse=True)
+    recent_contributions.sort(key=lambda item: item.get("sort_timestamp") or "", reverse=True)
 
     public_blocks = []
     for wing in ["A", "B", "C"]:
