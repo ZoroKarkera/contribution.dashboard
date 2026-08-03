@@ -338,6 +338,25 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
     total_collected = owner_total + sponsor_total
     net_balance = total_collected - total_spent
     progress_percent = round((total_collected / goal_amount) * 100, 1) if goal_amount else 0.0
+    generated_at = current_ist_timestamp()
+    generated_date = generated_at[:10]
+    previous_day_date = (datetime.strptime(generated_date, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    owner_previous_day_total = sum(
+        item["amount"]
+        for item in owner_recent
+        if str(item.get("sort_timestamp", "")).startswith(previous_day_date)
+    )
+    sponsor_previous_day_total = sum(
+        item["amount"]
+        for item in sponsor_recent
+        if str(item.get("sort_timestamp", "")).startswith(previous_day_date)
+    )
+    expenditure_previous_day_total = sum(
+        item["amount"]
+        for item in deduction_records
+        if str(item.get("sort_timestamp", "")).startswith(previous_day_date)
+    )
 
     recent_contributions = owner_recent + sponsor_recent
     recent_contributions.sort(key=lambda item: item.get("sort_timestamp") or "", reverse=True)
@@ -359,7 +378,7 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
             "subtitle": settings.get("dashboard_subtitle", ""),
             "society_name": settings.get("society_name", ""),
             "year": settings.get("festival_year", ""),
-            "generated_at": current_ist_timestamp(),
+            "generated_at": generated_at,
             "currency_symbol": currency_symbol,
             "logo_url": settings.get("logo_url", ""),
             "logo_alt": settings.get("logo_alt", "Society logo"),
@@ -392,6 +411,10 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
             "formatted_total_spent": format_currency(total_spent, currency_symbol),
             "formatted_net_balance": format_currency(net_balance, currency_symbol),
             "formatted_pending_amount": format_currency(max(goal_amount - total_collected, 0), currency_symbol),
+            "previous_day_date": previous_day_date,
+            "formatted_owner_previous_day_total": format_currency(owner_previous_day_total, currency_symbol),
+            "formatted_sponsor_previous_day_total": format_currency(sponsor_previous_day_total, currency_symbol),
+            "formatted_expenditure_previous_day_total": format_currency(expenditure_previous_day_total, currency_symbol),
         },
         "public_summary": {
             "target_amount": format_currency(goal_amount, currency_symbol),
@@ -426,23 +449,6 @@ def build_payload(settings: dict, owners: list[dict], sponsors: list[dict], dedu
 
 
 def build_email_summary(payload: dict) -> str:
-    today = str(payload['meta']['generated_at'])[:10]
-    owner_today_total = sum(
-        row['amount']
-        for row in payload['recent_contributions']
-        if row.get('channel') == 'Owner' and str(row.get('date', '')) == today
-    )
-    sponsor_today_total = sum(
-        row['amount']
-        for row in payload['recent_contributions']
-        if row.get('channel') == 'Sponsor' and str(row.get('date', '')) == today
-    )
-    expenditure_today_total = sum(
-        row['amount']
-        for row in payload['deductions_recent']
-        if str(row.get('entry_date', '')) == today
-    )
-
     lines = [
         f"{payload['meta']['title']} - Nightly Admin Update",
         f"Generated at: {payload['meta']['generated_at']}",
@@ -454,17 +460,25 @@ def build_email_summary(payload: dict) -> str:
         f"- Overall spent: {payload['summary']['formatted_total_spent']}",
         f"- Net balance: {payload['summary']['formatted_net_balance']}",
         "",
-        "Today",
-        f"- Owners/residents collected today: {format_currency(owner_today_total, payload['meta']['currency_symbol'])}",
-        f"- Sponsors collected today: {format_currency(sponsor_today_total, payload['meta']['currency_symbol'])}",
-        f"- Expenditure today: {format_currency(expenditure_today_total, payload['meta']['currency_symbol'])}",
+        f"Previous Day ({payload['summary']['previous_day_date']} | 00:00-23:59 IST)",
+        f"- Owners/residents collected: {payload['summary']['formatted_owner_previous_day_total']}",
+        f"- Sponsors collected: {payload['summary']['formatted_sponsor_previous_day_total']}",
+        f"- Expenditure: {payload['summary']['formatted_expenditure_previous_day_total']}",
         "",
         "Latest 10 Contributions",
     ]
 
     for row in payload["recent_contributions"][:10]:
+        contributor_label = row["label"]
+        if row.get("channel") == "Owner":
+            wing = str(row.get("wing", "")).strip()
+            base_label = str(row["label"]).strip()
+            if wing and not base_label.upper().startswith(f"{wing.upper()}-"):
+                contributor_label = f"{wing}-{base_label}"
+            else:
+                contributor_label = base_label
         lines.append(
-            f"- {row['date']} | {row['channel']} | {row['label']} | {format_currency(row['amount'], payload['meta']['currency_symbol'])}"
+            f"- {row['date']} | {row['channel']} | {contributor_label} | {format_currency(row['amount'], payload['meta']['currency_symbol'])}"
         )
 
     lines.append("")
