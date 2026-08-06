@@ -111,7 +111,14 @@ Update [data/settings.json](/data/settings.json) with the society name, event ye
    - `OWNERS_CSV_URL` = CSV export link for `owners` tab (GID: 277875549)
    - `RESPONSE_CSV_URL` = CSV export link for `response` tab (GID: 866511772)
 
-5. Add these repository secrets for nightly email delivery:
+5. If the sheet is private, configure service account auth:
+  - Create a Google Cloud service account with Sheets/Drive read-only access.
+  - Create and download its JSON key.
+  - Add the full JSON content as repository secret `GOOGLE_SERVICE_ACCOUNT_JSON`.
+  - Share the Google Sheet with the service account email from the JSON (`client_email`) as Viewer.
+  - Keep using the same `OWNERS_CSV_URL` and `RESPONSE_CSV_URL` values.
+
+6. Add these repository secrets for nightly email delivery:
    - `SMTP_SERVER` = SMTP server (e.g., smtp.gmail.com)
    - `SMTP_PORT` = SMTP port (e.g., 587)
    - `SMTP_USERNAME` = Email address
@@ -119,7 +126,7 @@ Update [data/settings.json](/data/settings.json) with the society name, event ye
    - `EMAIL_FROM` = Sender email address
    - `ADMIN_EMAILS` = Comma-separated list of admin emails
 
-6. The workflow runs every 15 minutes to rebuild dashboards and every day at 10 PM IST to send email summary.
+7. The workflow runs every 15 minutes to rebuild dashboards and every day at 10 PM IST to send email summary.
 ```
 
 ## GitHub Pages Deployment
