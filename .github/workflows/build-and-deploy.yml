@@ -16,9 +16,10 @@ on:
         required: false
         type: boolean
         default: false
-  schedule:
-    - cron: "*/15 * * * *"
-    - cron: "30 16 * * *"
+  # Event is over: 15-minute rebuilds and the 16:30 UTC nightly email are disabled.
+  # schedule:
+  #   - cron: "*/15 * * * *"
+  #   - cron: "30 16 * * *"
 
 permissions:
   contents: read
